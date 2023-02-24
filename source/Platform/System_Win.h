@@ -8,7 +8,7 @@ public:
 	{
 		static unsigned long s_CachedResult = -1;
 
-		if (s_CachedResult != -1)
+		if (s_CachedResult == -1)
 		{
 			SYSTEM_INFO info;
 			GetSystemInfo(&info);
