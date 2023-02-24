@@ -1,8 +1,10 @@
 #pragma once
 #include "System_Win.h"
 
-#include <Windows.h>
 #include <cstdint>
+#include <vector>
+#include <Windows.h>
+#include <tlhelp32.h>
 
 class Process
 {
@@ -19,6 +21,39 @@ public:
 	};
 
 	using ProcessInfo = PROCESS_INFORMATION;
+
+public:
+	Process()
+	{
+		m_hProcess = INVALID_HANDLE_VALUE;
+	}
+
+	Process(HANDLE hProcess) : m_hProcess(hProcess)
+	{
+
+	}
+
+	Process(Process&& other) noexcept
+	{
+		m_hProcess = other.m_hProcess;
+		other.m_hProcess = INVALID_HANDLE_VALUE;
+	}
+
+	Process(const Process&) = delete;
+
+	~Process()
+	{
+		CloseHandle();
+	}
+
+	void CloseHandle()
+	{
+		if (m_hProcess != INVALID_HANDLE_VALUE)
+		{
+			CloseHandle(m_hProcess);
+			m_hProcess = INVALID_HANDLE_VALUE;
+		}
+	}
 
 public:
 	static bool Create(wchar_t* process, wchar_t* commandLine = NULL, wchar_t* currentDirectory = NULL, Priority priority = Priority_Normal, int numCores = 1, ProcessInfo* pProcessInfo = NULL)
@@ -73,4 +108,32 @@ public:
 
 		return false;
 	}
+
+	static std::vector<Process> FindProcessesByName(wchar_t* name)
+	{
+		PROCESSENTRY32W entry;
+		entry.dwSize = sizeof(entry);
+
+		std::vector<Process> processes;
+		HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, NULL);
+
+		if (Process32FirstW(hSnapshot, &entry) == TRUE)
+		{
+			while (Process32NextW(hSnapshot, &entry) == TRUE)
+			{
+				if (wcscmp(entry.szExeFile, name) == 0)
+				{
+					HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, entry.th32ProcessID);
+					processes.emplace_back(hProcess);
+				}
+			}
+		}
+
+		CloseHandle(hSnapshot);
+
+		return processes;
+	}
+
+private:
+	HANDLE m_hProcess;
 };
