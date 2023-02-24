@@ -46,6 +46,23 @@ public:
 		CloseHandle();
 	}
 
+	HANDLE GetHandle() const
+	{
+		return m_hProcess;
+	}
+
+	DWORD GetId() const
+	{
+		return GetProcessId(m_hProcess);
+	}
+
+	HANDLE Release()
+	{
+		HANDLE hProcess = GetHandle();
+		m_hProcess = INVALID_HANDLE_VALUE;
+		return hProcess;
+	}
+
 	void CloseHandle()
 	{
 		if (m_hProcess != INVALID_HANDLE_VALUE)
