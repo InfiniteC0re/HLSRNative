@@ -14,7 +14,7 @@ private:
 
 	static BOOL CALLBACK EnumWindowsCallback(HWND hHwnd, LPARAM lParam)
 	{
-		EnumWindowsData* pData = static_cast<EnumWindowsData*>(lParam);
+		EnumWindowsData* pData = reinterpret_cast<EnumWindowsData*>(lParam);
 
 		DWORD iProcessId = 0;
 		GetWindowThreadProcessId(hHwnd, &iProcessId);
@@ -28,7 +28,7 @@ private:
 	}
 
 public:
-	Window(HANDLE hHandle) : m_hHandle(hHandle)
+	Window(HWND hHandle) : m_hHandle(hHandle)
 	{
 
 	}
@@ -58,11 +58,11 @@ public:
 		std::vector<Window> windows;
 
 		EnumWindowsData data{ iProcessId, windows };
-		EnumWindows(EnumWindowsCallback, &data);
+		EnumWindows(EnumWindowsCallback, (LPARAM)&data);
 
 		return windows;
 	}
 
 private:
-	HANDLE m_hHandle;
+	HWND m_hHandle;
 };
