@@ -1,7 +1,7 @@
 {
    "targets": [
       {
-         "target_name": "main",
+         "target_name": "Module",
          "sources": [
             "source/*.cpp"
          ],
