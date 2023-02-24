@@ -1,4 +1,6 @@
 #pragma once
+#include "System_Win.h"
+
 #include <Windows.h>
 #include <cstdint>
 
@@ -16,10 +18,10 @@ public:
 		Priority_RealTime,
 	};
 
-	using CreateData = PROCESS_INFORMATION;
+	using ProcessInfo = PROCESS_INFORMATION;
 
 public:
-	static bool Create(wchar_t* process, wchar_t* commandLine, wchar_t* currentDirectory, Priority priority, CreateData& createData)
+	static bool Create(wchar_t* process, wchar_t* commandLine = NULL, wchar_t* currentDirectory = NULL, Priority priority = Priority_Normal, int numCores = 1, ProcessInfo* pProcessInfo = NULL)
 	{
 		DWORD creationFlags = 0;
 
@@ -48,7 +50,27 @@ public:
 		STARTUPINFOW startupInfo;
 		memset(&startupInfo, '\0', sizeof(startupInfo));
 
-		BOOL bRes = CreateProcessW(process, commandLine, NULL, NULL, FALSE, creationFlags, NULL, currentDirectory, &startupInfo, &createData);
-		return bRes == TRUE;
+		PROCESS_INFORMATION processInfo;
+		BOOL bRes = CreateProcessW(process, commandLine, NULL, NULL, FALSE, creationFlags, NULL, currentDirectory, &startupInfo, &processInfo);
+		
+		if (bRes)
+		{
+			if (pProcessInfo != NULL)
+			{
+				*pProcessInfo = processInfo;
+			}
+
+			if (numCores == -1)
+			{
+				numCores = System::GetNumberOfProcessors();
+			}
+
+			DWORD_PTR processAffinityMask = (1 << numCores) - 1;
+			SetProcessAffinityMask(processInfo.hProcess, processAffinityMask);
+
+			return true;
+		}
+
+		return false;
 	}
 };
