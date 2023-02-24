@@ -67,13 +67,13 @@ public:
 	{
 		if (m_hProcess != INVALID_HANDLE_VALUE)
 		{
-			CloseHandle(m_hProcess);
+			::CloseHandle(m_hProcess);
 			m_hProcess = INVALID_HANDLE_VALUE;
 		}
 	}
 
 public:
-	static bool Create(wchar_t* process, wchar_t* commandLine = NULL, wchar_t* currentDirectory = NULL, Priority priority = Priority_Normal, int numCores = 1, ProcessInfo* pProcessInfo = NULL)
+	static bool Create(const wchar_t* process, const wchar_t* commandLine = NULL, wchar_t* currentDirectory = NULL, Priority priority = Priority_Normal, int numCores = 1, ProcessInfo* pProcessInfo = NULL)
 	{
 		DWORD creationFlags = 0;
 
@@ -103,8 +103,8 @@ public:
 		memset(&startupInfo, '\0', sizeof(startupInfo));
 
 		PROCESS_INFORMATION processInfo;
-		BOOL bRes = CreateProcessW(process, commandLine, NULL, NULL, FALSE, creationFlags, NULL, currentDirectory, &startupInfo, &processInfo);
-		
+		BOOL bRes = CreateProcessW(process, (LPWSTR)commandLine, NULL, NULL, FALSE, creationFlags, NULL, currentDirectory, &startupInfo, &processInfo);
+
 		if (bRes)
 		{
 			if (pProcessInfo != NULL)
@@ -119,6 +119,8 @@ public:
 
 			DWORD_PTR processAffinityMask = (1 << numCores) - 1;
 			SetProcessAffinityMask(processInfo.hProcess, processAffinityMask);
+			::CloseHandle(processInfo.hProcess);
+			::CloseHandle(processInfo.hThread);
 
 			return true;
 		}
@@ -146,7 +148,7 @@ public:
 			}
 		}
 
-		CloseHandle(hSnapshot);
+		::CloseHandle(hSnapshot);
 
 		return processes;
 	}
